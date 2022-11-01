@@ -9,9 +9,9 @@ use App\Models\Role;
 use App\Models\User;
 use App\Utils\Enum\EnumForRole;
 use App\Utils\Enum\EnumForStatus;
-use App\Utils\Enum\EnumForUser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
@@ -22,13 +22,13 @@ class AuthController extends Controller
             $role = Role::where('name', EnumForRole::ROLE2)->first();
 
             $data['role_id'] = $role->id;
+            $data['password'] = Hash::make($data['password']);
             $user = User::create($data);
 
             $success = [
                 'message' => 'Registered User!',
                 'name' => $user->name,
                 'email' => $user->email,
-                'access_token' => $user->createToken('AuthUserIndividual')->plainTextToken,
             ];
 
             return bodyResponse(EnumForStatus::OK, $success);
@@ -40,6 +40,7 @@ class AuthController extends Controller
     public function login(LoginRequest $request)
     {
         try {
+
             $data = $request->validated();
             $auth = Auth::attempt([
                 'email' => $data['email'],
@@ -52,8 +53,8 @@ class AuthController extends Controller
 
             $user = Auth::user();
             $success = [
-                'name' => $user['name'] .'Logging!',
-                'access_token' => $user->createToken('AuthUserIndividual')->plainTextToken,
+                'name' => $user['name'] .' Logging!',
+                'access_token' => $user->createToken('AuthUserIndividual')->accessToken,
             ];
             return bodyResponse(EnumForStatus::OK, $success);
         } catch (\Exception $e) {

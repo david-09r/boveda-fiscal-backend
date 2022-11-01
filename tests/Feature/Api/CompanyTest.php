@@ -11,6 +11,7 @@ use App\Utils\Enum\EnumForRole;
 use App\Utils\Enum\EnumForStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
+use Laravel\Passport\Passport;
 use Tests\TestCase;
 
 class CompanyTest extends TestCase
@@ -28,6 +29,8 @@ class CompanyTest extends TestCase
         $user = User::factory()->create([
             'role_id' => $role->id
         ]);
+
+        Passport::actingAs($user);
 
         Company::factory()->create([
             'nit' => 123456,
@@ -49,7 +52,7 @@ class CompanyTest extends TestCase
             'website' => 'www.empresa98765.com'
         ]);
 
-        $response = $this->actingAs($user)->getJson('api/company');
+        $response = $this->getJson('api/company');
 
         $response->assertStatus(200)
             ->assertJsonStructure([
@@ -107,6 +110,8 @@ class CompanyTest extends TestCase
             'role_id' => $role->id
         ]);
 
+        Passport::actingAs($user);
+
         Company::factory()->create([
             'nit' => 123456,
             'social_reason' => 'Empresa 123456',
@@ -129,7 +134,7 @@ class CompanyTest extends TestCase
             'user_id' => $user->id
         ]);
 
-        $response = $this->actingAs($user)->getJson('api/company');
+        $response = $this->getJson('api/company');
 
         $response->assertStatus(200)
             ->assertJsonStructure([
@@ -182,9 +187,11 @@ class CompanyTest extends TestCase
             'role_id' => $role->id
         ]);
 
+        Passport::actingAs($user);
+
         $user_representative = User::factory()->create();
 
-        $response = $this->actingAs($user)->postJson('api/company', [
+        $response = $this->postJson('api/company', [
             'nit' => 98765,
             'social_reason' => 'Empresa 98765',
             'site_direction' => 'Carrera 1A',
@@ -244,7 +251,9 @@ class CompanyTest extends TestCase
             'role_id' => $role->id
         ]);
 
-        $response = $this->actingAs($user)->postJson('api/company', [
+        Passport::actingAs($user);
+
+        $response = $this->postJson('api/company', [
             'nit' => 98765,
             'social_reason' => 'Empresa 98765',
             'site_direction' => 'Carrera 1A',
@@ -293,6 +302,8 @@ class CompanyTest extends TestCase
             'role_id' => $role->id
         ]);
 
+        Passport::actingAs($user);
+
         $company = Company::factory()->create([
             'nit' => 123456,
             'social_reason' => 'Empresa 123456',
@@ -314,7 +325,7 @@ class CompanyTest extends TestCase
             'website' => 'www.empresas123456.com'
         ]);
 
-        $response = $this->actingAs($user)->getJson("api/company/{$company->id}");
+        $response = $this->getJson("api/company/{$company->id}");
 
         $response->assertStatus(200)
             ->assertJsonStructure([
@@ -359,6 +370,8 @@ class CompanyTest extends TestCase
             'role_id' => $role->id
         ]);
 
+        Passport::actingAs($user);
+
         $company = Company::factory()->create([
             'nit' => 123456,
             'social_reason' => 'Empresa 123456',
@@ -380,7 +393,7 @@ class CompanyTest extends TestCase
             'website' => 'www.empresas123456.com'
         ]);
 
-        $response = $this->actingAs($user)->getJson("api/company/{$company->id}");
+        $response = $this->getJson("api/company/{$company->id}");
 
         $response->assertStatus(200)
             ->assertJsonStructure([
@@ -420,6 +433,8 @@ class CompanyTest extends TestCase
             'role_id' => $role->id
         ]);
 
+        Passport::actingAs($user);
+
         $company = Company::factory()->create([
             'nit' => 123456,
             'social_reason' => 'Empresa 123456',
@@ -430,7 +445,7 @@ class CompanyTest extends TestCase
             'website' => 'www.empresa123456.com'
         ]);
 
-        $response = $this->actingAs($user)->putJson("api/company/{$company->id}", [
+        $response = $this->putJson("api/company/{$company->id}", [
             'nit' => 28765,
             'social_reason' => 'Empresa 28765',
             'site_direction' => 'Carrera 100A',
@@ -497,6 +512,8 @@ class CompanyTest extends TestCase
             'role_id' => $role->id
         ]);
 
+        Passport::actingAs($user);
+
         $company = Company::factory()->create([
             'nit' => 123456,
             'social_reason' => 'Empresa 123456',
@@ -508,7 +525,7 @@ class CompanyTest extends TestCase
             'user_id' => $user->id
         ]);
 
-        $response = $this->actingAs($user)->putJson("api/company/{$company->id}", [
+        $response = $this->putJson("api/company/{$company->id}", [
             'nit' => 28765,
             'social_reason' => 'Empresa 28765',
             'site_direction' => 'Carrera 100A',
@@ -575,6 +592,8 @@ class CompanyTest extends TestCase
             'role_id' => $role->id
         ]);
 
+        Passport::actingAs($user);
+
         $company = Company::factory()->create([
             'nit' => 123456,
             'social_reason' => 'Empresa 123456',
@@ -589,7 +608,7 @@ class CompanyTest extends TestCase
         Company::factory()->create();
         Company::factory()->create();
 
-        $response = $this->actingAs($user)->deleteJson("api/company/{$company->id}");
+        $response = $this->deleteJson("api/company/{$company->id}");
 
         $response->assertStatus(200)
             ->assertJsonStructure([
@@ -620,6 +639,8 @@ class CompanyTest extends TestCase
             'role_id' => $role->id
         ]);
 
+        Passport::actingAs($user);
+
         $company = Company::factory()->create([
             'nit' => 123456,
             'social_reason' => 'Empresa 123456',
@@ -634,7 +655,7 @@ class CompanyTest extends TestCase
         Company::factory()->create();
         Company::factory()->create();
 
-        $response = $this->actingAs($user)->deleteJson("api/company/{$company->id}");
+        $response = $this->deleteJson("api/company/{$company->id}");
 
         $response->assertStatus(200)
             ->assertJsonStructure([

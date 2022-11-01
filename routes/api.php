@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\CompanyController;
+use App\Http\Controllers\Api\InvoiceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -19,14 +20,25 @@ use Illuminate\Support\Facades\Route;
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('auth:api')->group(function () {
     Route::get('company', [CompanyController::class, 'index']);
     Route::post('company', [CompanyController::class, 'store']);
-    Route::get('company/{id}', [CompanyController::class, 'show']);
-    Route::put('company/{id}', [CompanyController::class, 'update']);
-    Route::delete('company/{id}', [CompanyController::class, 'deletePermanent']);
+    Route::get('company/{companyId}', [CompanyController::class, 'show']);
+    Route::put('company/{companyId}', [CompanyController::class, 'update']);
+    Route::delete('company/{companyId}', [CompanyController::class, 'deletePermanent']);
+
+    Route::prefix('company')->group(function() {
+        Route::prefix('{companyId}')->group(function () {
+            Route::get('invoices', [InvoiceController::class, 'index']);
+            Route::post('invoice', [InvoiceController::class, 'store']);
+
+            Route::prefix('invoice/{invoiceId}')->group(function () {
+                Route::delete('', [InvoiceController::class, 'delete']);
+            });
+        });
+    });
 });

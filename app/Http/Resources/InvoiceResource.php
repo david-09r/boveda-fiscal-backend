@@ -15,13 +15,13 @@ class InvoiceResource extends JsonResource
     public function toArray($request)
     {
         return [
-            'details' => $this->details,
+            'details' => json_decode($this->details),
             'total_iva_collected' => $this->total_iva_collected,
             'total_amount_payable' => $this->total_amount_payable,
+            'date_issuance' => $this->date_issuance,
             'date_payment' => $this->date_payment,
             'type' => $this->type,
-            'state' => $this->state,
-            'company_id' => $this->company_id
+            'state' => $this->state
         ];
     }
 }

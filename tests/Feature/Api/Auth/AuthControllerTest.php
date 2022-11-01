@@ -61,46 +61,4 @@ class AuthControllerTest extends TestCase
             'role_id' => $role->id
         ]);
     }
-
-    public function test_auth_login()
-    {
-        $this->withExceptionHandling();
-        Role::factory()->create([
-            'name' => EnumForRole::ROLE1
-        ]);
-
-        $role = Role::factory()->create([
-            'name' => EnumForRole::ROLE2
-        ]);
-
-        $user = User::factory()->create([
-            'email' => 'david@email.com1',
-            'password' => Hash::make('hola.1236'),
-            'role_id' => $role->id
-        ]);
-
-        $response = $this->postJson('api/auth/login', [
-            'email' => $user->email,
-            'password' => 'hola.1236'
-        ]);
-
-        $response->assertStatus(200)
-            ->assertJsonStructure([
-                'data' => [
-                    'name',
-                    'access_token'
-                ],
-                'meta' => [
-                    'status',
-                    'msg'
-                ]
-            ])
-            ->assertJsonFragment([
-                'name' => $user['name'] .'Logging!',
-                'access_token' => $response['data']['access_token'],
-                'status' => EnumForStatus::OK,
-                'msg' => EnumForStatus::MESSAGE_200
-            ]);
-
-    }
 }

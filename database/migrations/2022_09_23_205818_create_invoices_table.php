@@ -16,8 +16,8 @@ return new class extends Migration
         Schema::create('invoices', function (Blueprint $table) {
             $table->id();
             $table->longText('details');
-            $table->string('total_iva_collected');
-            $table->string('total_amount_payable');
+            $table->double('total_iva_collected');
+            $table->double('total_amount_payable');
             $table->dateTime('date_issuance');
             $table->dateTime('date_payment');
             $table->string('type');

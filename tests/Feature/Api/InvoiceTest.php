@@ -6,36 +6,42 @@ use App\Models\Company;
 use App\Models\Invoice;
 use App\Models\Role;
 use App\Models\User;
+use App\Utils\Enum\EnumForInvoice;
 use App\Utils\Enum\EnumForRole;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
+use Laravel\Passport\Passport;
 use Tests\TestCase;
 
 class InvoiceTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_invoice_by_representative()
+    public function test_invoice_list_by_representative()
     {
         $this->withExceptionHandling();
 
         $role = Role::factory()->create([
-            'name' => EnumForRole::ROLE1
+            'name' => EnumForRole::ROLE2
         ]);
 
         $user = User::factory()->create([
             'role_id' => $role->id
         ]);
 
-        $company = Company::factory()->create();
+        Passport::actingAs($user);
+
+        $company = Company::factory()->create([
+            'user_id' => $user->id
+        ]);
 
         Invoice::factory()->create([
-            'details' => [
+            'details' => json_encode([
                 'name' => 'name 1',
                 'amount' => 12,
                 'unit_value' => 2323,
                 'total' => 12
-            ],
+            ]),
             'total_iva_collected' => 2000.2,
             'total_amount_payable' => 100000.6,
             'date_issuance' => '2021-05-20 02:10:20',
@@ -46,12 +52,14 @@ class InvoiceTest extends TestCase
         ]);
 
         Invoice::factory()->create([
-            'details' => [
-                'name' => 'name 2',
-                'amount' => 31,
-                'unit_value' => 123,
-                'total' => 31*123
-            ],
+            'details' => json_encode(
+                [
+                    'name' => 'name 2',
+                    'amount' => 31,
+                    'unit_value' => 123,
+                    'total' => 31*123
+                ]
+            ),
             'total_iva_collected' => 3000.2,
             'total_amount_payable' => 400000.6,
             'date_issuance' => '2020-02-20 20:20:20',
@@ -63,9 +71,8 @@ class InvoiceTest extends TestCase
 
         Invoice::factory()->count(4)->create();
 
-        $response = $this->getJson('api/invoice');
+        $response = $this->getJson("api/company/{$company->id}/invoices");
 
-        dd($response->content());
         $response->assertStatus(200)
             ->assertJsonStructure([
                 'data' => [
@@ -76,8 +83,7 @@ class InvoiceTest extends TestCase
                         'date_issuance',
                         'date_payment',
                         'type',
-                        'state',
-                        'company_id'
+                        'state'
                     ]
                 ],
                 'meta' => [
@@ -90,15 +96,14 @@ class InvoiceTest extends TestCase
                     'name' => 'name 1',
                     'amount' => 12,
                     'unit_value' => 2323,
-                    'total' => 12*2323
+                    'total' => 12
                 ],
                 'total_iva_collected' => 2000.2,
                 'total_amount_payable' => 100000.6,
                 'date_issuance' => '2021-05-20 02:10:20',
                 'date_payment' => '2022-10-10 10:50:20',
                 'type' => 'Nota debito',
-                'state' => 'Activa',
-                'company_id' => $company->id
+                'state' => 'Activa'
             ])
             ->assertJsonFragment([
                 'details' => [
@@ -112,8 +117,337 @@ class InvoiceTest extends TestCase
                 'date_issuance' => '2020-02-20 20:20:20',
                 'date_payment' => '2020-04-10 10:20:20',
                 'type' => 'Nota credito',
-                'state' => 'Pendiente',
-                'company_id' => $company->id
+                'state' => 'Pendiente'
             ]);
+    }
+
+    public function test_invoice_list_by_admin()
+    {
+        $this->withExceptionHandling();
+
+        $role = Role::factory()->create([
+            'name' => EnumForRole::ROLE1
+        ]);
+
+        $user = User::factory()->create([
+            'role_id' => $role->id
+        ]);
+
+        Passport::actingAs($user);
+
+        Invoice::factory()->create();
+        Invoice::factory()->create();
+        Invoice::factory()->create();
+
+        $response = $this->getJson('api/company/all/invoices');
+
+        $response->assertStatus(200)
+            ->assertJsonStructure([
+                'data' => [
+                    '*' => [
+                        'details',
+                        'total_iva_collected',
+                        'total_amount_payable',
+                        'date_issuance',
+                        'date_payment',
+                        'type',
+                        'state'
+                    ]
+                ],
+                'meta' => [
+                    'status',
+                    'msg'
+                ]
+            ]);
+    }
+
+    public function test_invoice_company_incorrect_company_endpoint()
+    {
+        $this->withExceptionHandling();
+
+        $role = Role::factory()->create([
+            'name' => EnumForRole::ROLE1
+        ]);
+
+        $user = User::factory()->create([
+            'role_id' => $role->id
+        ]);
+
+        Passport::actingAs($user);
+
+        $response = $this->getJson('api/company/0prueba0/invoices');
+
+        $response->assertStatus(404);
+    }
+
+    public function test_invoice_store_by_representative()
+    {
+        $this->withExceptionHandling();
+
+        $role = Role::factory()->create([
+            'name' => EnumForRole::ROLE2
+        ]);
+
+        $user = User::factory()->create([
+            'role_id' => $role->id
+        ]);
+
+        $company = Company::factory()->create([
+            'user_id' => $user->id
+        ]);
+
+        Passport::actingAs($user);
+
+        $response = $this->postJson("api/company/$company->id/invoice", [
+            'details' => [
+                [
+                    'name' => 'Nombre ejemplo',
+                    'quantity' => 201,
+                    'unit_value' => 1000.2
+                ],
+                [
+                    'name' => 'Nombre ejemplo 2',
+                    'quantity' => 10,
+                    'unit_value' => 312.2
+                ]
+            ],
+            'total_iva_collected' => 1234.0,
+            'total_amount_payable' => 12345.0,
+            'date_issuance' => '2022-10-20T20:02:02',
+            'date_payment' => '2022-10-20T20:02:02',
+            'type' => 'Nota débito',
+            'state' => 'Cancelado'
+        ]);
+
+        $response->assertStatus(201)
+            ->assertJsonStructure([
+                'data' => [
+                    'details',
+                    'total_iva_collected',
+                    'total_amount_payable',
+                    'date_issuance',
+                    'date_payment',
+                    'type',
+                    'state'
+                ],
+                'meta' => [
+                    'status',
+                    'msg'
+                ]
+            ])
+            ->assertJsonFragment([
+                'data' => [
+                    'details' => [
+                        [
+                            'name' => 'Nombre ejemplo',
+                            'quantity' => 201,
+                            'unit_value' => 1000.2,
+                            'total' => 201040.2
+                        ],
+                        [
+                            'name' => 'Nombre ejemplo 2',
+                            'quantity' => 10,
+                            'unit_value' => 312.2,
+                            'total' => 3122
+                        ]
+                    ],
+                    'total_iva_collected' => 1234.0,
+                    'total_amount_payable' => 12345.0,
+                    'date_issuance' => '2022-10-20T20:02:02',
+                    'date_payment' => '2022-10-20T20:02:02',
+                    'type' => 'Nota débito',
+                    'state' => 'Cancelado',
+                ]
+            ]);
+
+        $this->assertDatabaseHas('invoices', [
+            'details' => json_encode([
+                [
+                    'name' => 'Nombre ejemplo',
+                    'quantity' => 201,
+                    'unit_value' => 1000.2,
+                    'total' => 201040.2
+                ],
+                [
+                    'name' => 'Nombre ejemplo 2',
+                    'quantity' => 10,
+                    'unit_value' => 312.2,
+                    'total' => 3122
+                ]
+            ]),
+            'total_iva_collected' => 1234.0,
+            'total_amount_payable' => 12345.0,
+            'date_issuance' => '2022-10-20T20:02:02',
+            'date_payment' => '2022-10-20T20:02:02',
+            'type' => 'Nota débito',
+            'state' => 'Cancelado',
+            'company_id' => $company->id
+        ]);
+    }
+
+    public function test_invoice_store_by_admin()
+    {
+        $this->withExceptionHandling();
+
+        $role = Role::factory()->create([
+            'name' => EnumForRole::ROLE1
+        ]);
+
+        $user = User::factory()->create([
+            'role_id' => $role->id
+        ]);
+
+        Passport::actingAs($user);
+
+        $company = Company::factory()->create();
+
+        $response = $this->postJson("api/company/$company->id/invoice", [
+            'details' => [
+                [
+                    'name' => 'Nombre ejemplo',
+                    'quantity' => 201,
+                    'unit_value' => 1000.2
+                ],
+                [
+                    'name' => 'Nombre ejemplo 2',
+                    'quantity' => 10,
+                    'unit_value' => 312.2
+                ]
+            ],
+            'total_iva_collected' => 1234.0,
+            'total_amount_payable' => 12345.0,
+            'date_issuance' => '2022-10-20T20:02:02',
+            'date_payment' => '2022-10-20T20:02:02',
+            'type' => 'Nota débito',
+            'state' => 'Cancelado'
+        ]);
+
+        $response->assertStatus(201)
+            ->assertJsonStructure([
+                'data' => [
+                    'details',
+                    'total_iva_collected',
+                    'total_amount_payable',
+                    'date_issuance',
+                    'date_payment',
+                    'type',
+                    'state'
+                ],
+                'meta' => [
+                    'status',
+                    'msg'
+                ]
+            ])
+            ->assertJsonFragment([
+                'data' => [
+                    'details' => [
+                        [
+                            'name' => 'Nombre ejemplo',
+                            'quantity' => 201,
+                            'unit_value' => 1000.2,
+                            'total' => 201040.2
+                        ],
+                        [
+                            'name' => 'Nombre ejemplo 2',
+                            'quantity' => 10,
+                            'unit_value' => 312.2,
+                            'total' => 3122
+                        ]
+                    ],
+                    'total_iva_collected' => 1234.0,
+                    'total_amount_payable' => 12345.0,
+                    'date_issuance' => '2022-10-20T20:02:02',
+                    'date_payment' => '2022-10-20T20:02:02',
+                    'type' => 'Nota débito',
+                    'state' => 'Cancelado',
+                ]
+            ]);
+
+        $this->assertDatabaseHas('invoices', [
+            'details' => json_encode([
+                [
+                    'name' => 'Nombre ejemplo',
+                    'quantity' => 201,
+                    'unit_value' => 1000.2,
+                    'total' => 201040.2
+                ],
+                [
+                    'name' => 'Nombre ejemplo 2',
+                    'quantity' => 10,
+                    'unit_value' => 312.2,
+                    'total' => 3122
+                ]
+            ]),
+            'total_iva_collected' => 1234.0,
+            'total_amount_payable' => 12345.0,
+            'date_issuance' => '2022-10-20T20:02:02',
+            'date_payment' => '2022-10-20T20:02:02',
+            'type' => 'Nota débito',
+            'state' => 'Cancelado',
+            'company_id' => $company->id
+        ]);
+    }
+
+    public function test_invoice_delete_by_admin()
+    {
+        $this->withExceptionHandling();
+
+        $role = Role::factory()->create([
+            'name' => EnumForRole::ROLE1
+        ]);
+
+        $user = User::factory()->create([
+            'role_id' => $role->id
+        ]);
+
+        Passport::actingAs($user);
+
+        $company = Company::factory()->create();
+
+        $invoice = Invoice::factory()->create([
+            'company_id' => $company->id
+        ]);
+
+        $response = $this->deleteJson("api/company/$company->id/invoice/$invoice->id");
+
+        $response->assertStatus(200)
+            ->assertJsonStructure([
+                'message',
+                'meta' => [
+                    'status',
+                    'msg'
+                ]
+            ])->assertJsonFragment([
+                'message' => EnumForInvoice::DELETED_INVOICE
+            ]);
+
+        $this->assertDatabaseMissing('invoices', [
+            'id' => $invoice->id
+        ]);
+    }
+
+    public function test_invoice_delete_by_representative()
+    {
+        $this->withExceptionHandling();
+
+        $role = Role::factory()->create([
+            'name' => EnumForRole::ROLE2
+        ]);
+
+        $user = User::factory()->create([
+            'role_id' => $role->id
+        ]);
+
+        Passport::actingAs($user);
+
+        $company = Company::factory()->create();
+
+        $invoice = Invoice::factory()->create([
+            'company_id' => $company->id
+        ]);
+
+        $response = $this->deleteJson("api/company/$company->id/invoice/$invoice->id");
+
+        $response->assertStatus(401);
     }
 }

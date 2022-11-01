@@ -7,6 +7,7 @@ use App\Http\Requests\CompanyRequest;
 use App\Services\CompanyServices;
 use App\Utils\Enum\EnumForStatus;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CompanyController extends Controller
 {

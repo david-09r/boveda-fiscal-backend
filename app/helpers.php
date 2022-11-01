@@ -45,6 +45,11 @@ if (!function_exists('bodyResponse')) {
                     [],
                     EnumForStatus::UNAUTHORIZED
                 );
+            case EnumForStatus::NOT_FOUND:
+                return response()->json(
+                    [],
+                    EnumForStatus::NOT_FOUND
+                );
             default:
                 return response()->json(
                     null,
