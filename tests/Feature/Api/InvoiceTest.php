@@ -17,7 +17,7 @@ class InvoiceTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_invoice_list_by_representative()
+    public function test_invoice_list_pagination_by_representative()
     {
         $this->withExceptionHandling();
 
@@ -35,89 +35,43 @@ class InvoiceTest extends TestCase
             'user_id' => $user->id
         ]);
 
-        Invoice::factory()->create([
-            'details' => json_encode([
-                'name' => 'name 1',
-                'amount' => 12,
-                'unit_value' => 2323,
-                'total' => 12
-            ]),
-            'total_iva_collected' => 2000.2,
-            'total_amount_payable' => 100000.6,
-            'date_issuance' => '2021-05-20 02:10:20',
-            'date_payment' => '2022-10-10 10:50:20',
-            'type' => 'Nota debito',
-            'state' => 'Activa',
+        Invoice::factory()->count(20)->create([
             'company_id' => $company->id
         ]);
-
-        Invoice::factory()->create([
-            'details' => json_encode(
-                [
-                    'name' => 'name 2',
-                    'amount' => 31,
-                    'unit_value' => 123,
-                    'total' => 31*123
-                ]
-            ),
-            'total_iva_collected' => 3000.2,
-            'total_amount_payable' => 400000.6,
-            'date_issuance' => '2020-02-20 20:20:20',
-            'date_payment' => '2020-04-10 10:20:20',
-            'type' => 'Nota credito',
-            'state' => 'Pendiente',
-            'company_id' => $company->id
-        ]);
-
-        Invoice::factory()->count(4)->create();
 
         $response = $this->getJson("api/company/{$company->id}/invoices");
 
         $response->assertStatus(200)
             ->assertJsonStructure([
                 'data' => [
-                    '*' => [
-                        'details',
-                        'total_iva_collected',
-                        'total_amount_payable',
-                        'date_issuance',
-                        'date_payment',
-                        'type',
-                        'state'
-                    ]
+                    'current_page',
+                    'data' => [
+                        '*' => [
+                            'details',
+                            'total_iva_collected',
+                            'total_amount_payable',
+                            'date_issuance',
+                            'date_payment',
+                            'type',
+                            'state'
+                        ]
+                    ],
+                    'first_page_url',
+                    'from',
+                    'last_page',
+                    'last_page_url',
+                    'links',
+                    'next_page_url',
+                    'path',
+                    'per_page',
+                    'prev_page_url',
+                    'to',
+                    'total',
                 ],
                 'meta' => [
                     'status',
                     'msg'
                 ]
-            ])
-            ->assertJsonFragment([
-                'details' => [
-                    'name' => 'name 1',
-                    'amount' => 12,
-                    'unit_value' => 2323,
-                    'total' => 12
-                ],
-                'total_iva_collected' => 2000.2,
-                'total_amount_payable' => 100000.6,
-                'date_issuance' => '2021-05-20 02:10:20',
-                'date_payment' => '2022-10-10 10:50:20',
-                'type' => 'Nota debito',
-                'state' => 'Activa'
-            ])
-            ->assertJsonFragment([
-                'details' => [
-                    'name' => 'name 2',
-                    'amount' => 31,
-                    'unit_value' => 123,
-                    'total' => 31*123
-                ],
-                'total_iva_collected' => 3000.2,
-                'total_amount_payable' => 400000.6,
-                'date_issuance' => '2020-02-20 20:20:20',
-                'date_payment' => '2020-04-10 10:20:20',
-                'type' => 'Nota credito',
-                'state' => 'Pendiente'
             ]);
     }
 

@@ -48,14 +48,14 @@ class InvoiceServices
 
                 $invoices = Invoice::where('company_id', $id)
                     ->where('status', true)
-                    ->get();
+                    ->paginate(10);
             }
 
             if ($invoices->isEmpty()) {
                 return serviceResponse(EnumForStatus::OK, EnumForInvoice::NO_INVOICES);
             }
 
-            return serviceResponse(EnumForStatus::OK, InvoiceResource::collection($invoices));
+            return serviceResponse(EnumForStatus::OK, $invoices);
         }catch (\Exception $e){
             throw new \Exception($e->getMessage());
         }
