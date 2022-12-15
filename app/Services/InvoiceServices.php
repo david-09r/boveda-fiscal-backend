@@ -48,6 +48,7 @@ class InvoiceServices
 
                 $invoices = Invoice::where('company_id', $id)
                     ->where('status', true)
+                    ->orderBy('date_issuance', 'desc')
                     ->paginate(10);
             }
 
