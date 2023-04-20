@@ -20,18 +20,22 @@ class InvoiceServices
         $this->authController = $authController;
     }
 
-    public function listInvoices($id)
+    public function listInvoices($id, $request): array
     {
         try {
             $user = Auth::user();
             $role = $this->authController->verifyRoleUserAndPermission($user);
+
+            $sort = $request->input('sort') !== null ? $request->input('sort') : 'id';
 
             if ($id === 'all') {
                 if ($role !== EnumForRole::ROLE1) {
                     return serviceResponse(EnumForStatus::OK, EnumForInvoice::NOT_PERMISSIONS);
                 }
 
-                $invoices = Invoice::where('status', true)->get();
+                $invoices = Invoice::where('status', true)
+                    ->orderBy($sort, 'desc')
+                    ->paginate(10);
             }else {
                 if (!is_numeric($id)) {
                     return serviceResponse(EnumForStatus::NOT_FOUND);

@@ -15,7 +15,7 @@ class CompanyResource extends JsonResource
     public function toArray($request)
     {
         return [
-            'nit' => $this->nit,
+            'nit' => (int) $this->nit,
             'social_reason' => $this->social_reason,
             'site_direction' => $this->site_direction,
             'phone_number' => '+' .$this->code_number .' ' .$this->phone_number,

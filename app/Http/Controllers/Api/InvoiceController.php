@@ -15,10 +15,10 @@ class InvoiceController extends Controller
         $this->service = $invoiceServices;
     }
 
-    public function index($id)
+    public function index($id, Request $request)
     {
         try {
-            $response = $this->service->listInvoices($id);
+            $response = $this->service->listInvoices($id, $request);
             return bodyResponse($response['statusCode'], $response['data']);
         }catch (\Exception $e){
             return bodyError($e->getMessage(), EnumForStatus::INTERNAL_SERVER_ERROR);

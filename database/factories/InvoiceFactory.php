@@ -30,7 +30,7 @@ class InvoiceFactory extends Factory
                 ]
             ]),
             'total_iva_collected' => 12312.0,
-            'total_amount_payable' => 212312.0,
+            'total_amount_payable' => $this->faker->numberBetween(1000, 10000),
             'date_issuance' => $this->faker->dateTimeBetween('-1 years', 'now'),
             'date_payment' => $this->faker->dateTimeBetween('now', '+4 years'),
             'type' => 'Nota debito',

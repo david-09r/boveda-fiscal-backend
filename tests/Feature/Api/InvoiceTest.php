@@ -89,23 +89,23 @@ class InvoiceTest extends TestCase
 
         Passport::actingAs($user);
 
-        Invoice::factory()->create();
-        Invoice::factory()->create();
-        Invoice::factory()->create();
+        Invoice::factory()->create()->count(3);
 
         $response = $this->getJson('api/company/all/invoices');
 
         $response->assertStatus(200)
             ->assertJsonStructure([
                 'data' => [
-                    '*' => [
-                        'details',
-                        'total_iva_collected',
-                        'total_amount_payable',
-                        'date_issuance',
-                        'date_payment',
-                        'type',
-                        'state'
+                    'data' => [
+                        '*' => [
+                            'details',
+                            'total_iva_collected',
+                            'total_amount_payable',
+                            'date_issuance',
+                            'date_payment',
+                            'type',
+                            'state'
+                        ]
                     ]
                 ],
                 'meta' => [
@@ -113,6 +113,51 @@ class InvoiceTest extends TestCase
                     'msg'
                 ]
             ]);
+    }
+
+    public function test_invoice_list_top_by_admin()
+    {
+        $this->withExceptionHandling();
+
+        $role = Role::factory()->create([
+            'name' => EnumForRole::ROLE1
+        ]);
+
+        $user = User::factory()->create([
+            'role_id' => $role->id
+        ]);
+
+        Passport::actingAs($user);
+
+        Invoice::factory()->count(10)->create();
+
+        $response = $this->getJson('api/company/all/invoices?sort=total_amount_payable');
+
+        $invoices = $response->json('data')['data'];
+
+        $response->assertStatus(200)
+            ->assertJsonStructure([
+                'data' => [
+                    'data' => [
+                        '*' => [
+                            'details',
+                            'total_iva_collected',
+                            'total_amount_payable',
+                            'date_issuance',
+                            'date_payment',
+                            'type',
+                            'state'
+                        ]
+                    ]
+                ],
+                'meta' => [
+                    'status',
+                    'msg'
+                ]
+            ]);
+
+        $sortedInvoices = collect($invoices)->sortByDesc('total_amount_payable')->values()->all();
+        $this->assertEquals($sortedInvoices, $invoices);
     }
 
     public function test_invoice_company_incorrect_company_endpoint()
